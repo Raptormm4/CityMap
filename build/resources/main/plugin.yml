@@ -1,0 +1,19 @@
+name: CityMap
+version: '1.0-SNAPSHOT'
+main: com.raptormm4.cityMap.CityMap
+api-version: '1.21'
+commands:
+  claim:
+    description: "Claims chunk for testing"
+    usage: /claim
+    aliases:
+  unclaim:
+    description: "Unclaims chunk for testing"
+    usage: /unclaim
+    aliases:
+  plot:
+    description: "Base command for plot of real property"
+    usage: /plot
+    aliases: [p]
+    permission: citymod.command.plot
+    permission-message: "You do not have permission to use this command"
