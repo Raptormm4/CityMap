@@ -1,24 +1,18 @@
 package com.raptormm4.cityMap;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.raptormm4.cityMap.commands.ClaimCommand;
 import com.raptormm4.cityMap.commands.PlotCommand;
 import com.raptormm4.cityMap.commands.UnclaimCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.codehaus.plexus.util.IOUtil;
 
-import java.io.IOException;
-import java.net.URL;
-import java.text.ParseException;
 import java.util.*;
 
 public final class CityMap extends JavaPlugin {
 
     private HashMap<String, ChunkBundle> chunks;
 
-    class ChunkBundle {
+    public static class ChunkBundle {
         UUID uuid;
         String zoning;
 
@@ -26,18 +20,10 @@ public final class CityMap extends JavaPlugin {
             this.uuid = uuid;
             this.zoning = zoning;
         }
-
-        public UUID getUuid() {
-            return uuid;
-        }
-
-        public String getZoning() {
-            return zoning;
-        }
     }
 
-    Set<String> chunkIdSet = chunks.keySet();
-    List<String> chunkIdList = new ArrayList<>(chunkIdSet);
+    private Set<String> chunkIdSet = chunks.keySet();
+    private List<String> chunkIdList = new ArrayList<>(chunkIdSet);
 
     @Override
     public void onEnable() {

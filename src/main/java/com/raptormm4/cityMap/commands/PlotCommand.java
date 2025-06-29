@@ -43,7 +43,7 @@ public class PlotCommand implements CommandExecutor, TabExecutor {
                     sender.sendMessage(ChatColor.RED + "This chunk has not yet been claimed!");
                 }
             }
-            if (args.length == 1) {
+            if (args.length == 1 && !(args[0].equals("set"))) {
                 boolean isPlotReal = plugin.isPlotReal(args[0]);
                 if (isPlotReal == true) {
                     if (player.isOp()) {
