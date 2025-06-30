@@ -11,6 +11,8 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -103,8 +105,21 @@ public class PlotCommand implements CommandExecutor, TabExecutor {
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String @NotNull [] strings) {
-        return List.of();
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+
+        System.out.println("Args size: " + args.length);
+
+        if (args.length == 1) {
+            return Arrays.asList("set");
+        }
+        if (args.length == 2) {
+            return Arrays.asList("zoning");
+        }
+        if (args.length == 3) {
+            return Arrays.asList("residential", "commercial", "industrial", "agricultural");
+        }
+
+        return new ArrayList<>();
     }
 
 }

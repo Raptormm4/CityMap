@@ -22,12 +22,15 @@ public final class CityMap extends JavaPlugin {
         }
     }
 
-    private Set<String> chunkIdSet = chunks.keySet();
-    private List<String> chunkIdList = new ArrayList<>(chunkIdSet);
+    Set<String> chunkIdSet;
+    List<String> chunkIdList;
 
     @Override
     public void onEnable() {
         this.chunks = new HashMap<>();
+        this.chunkIdSet = chunks.keySet();
+        this.chunkIdList = new ArrayList<>(chunkIdSet);
+
         System.out.println("CityMap is up and running. Go Gators!");
 
         getCommand("claim").setExecutor(new ClaimCommand(this));
@@ -55,6 +58,7 @@ public final class CityMap extends JavaPlugin {
     }
 
     public boolean isPlotReal(String chunk) {
+        System.out.println(chunkIdList);
         return chunkIdList.contains(chunk);
     }
 
