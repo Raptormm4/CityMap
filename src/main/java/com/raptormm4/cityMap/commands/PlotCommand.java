@@ -46,7 +46,7 @@ public class PlotCommand implements CommandExecutor, TabExecutor {
                 }
             }
             if (args.length == 1 && !(args[0].equals("set"))) {
-                boolean isPlotReal = plugin.isPlotReal(args[0]);
+                boolean isPlotReal = plugin.isChunk(args[0]);
                 if (isPlotReal == true) {
                     if (player.isOp()) {
                         String zoning = plugin.getZoning(args[0]);

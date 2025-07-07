@@ -11,19 +11,11 @@ import java.util.*;
 
 public final class CityMap extends JavaPlugin {
 
-    private HashMap<String, UUID> plotOwnership;
-    private HashMap<String, String> plotZoning;
-
-    Set<String> chunkIdSet;
-    List<String> chunkIdList;
+    private HashMap<String, UUID> plotOwnership = new HashMap<>();
+    private HashMap<String, String> plotZoning = new HashMap<>();
 
     @Override
     public void onEnable() {
-        this.plotOwnership = new HashMap<>();
-        this.plotZoning = new HashMap<>();
-        this.chunkIdSet = plotOwnership.keySet();
-        this.chunkIdList = new ArrayList<>(chunkIdSet);
-
         System.out.println("CityMap is up and running. Go Gators!");
 
         getCommand("claim").setExecutor(new ClaimCommand(this));
@@ -58,18 +50,17 @@ public final class CityMap extends JavaPlugin {
         return plotOwnership.containsKey(chunk);
     }
 
-    public boolean isPlotReal(String chunk) {
-        System.out.println(chunkIdList);
-        return chunkIdList.contains(chunk);
-    }
-
     public UUID getOwner(String chunk) {
         return plotOwnership.get(chunk);
     }
 
     public String getOwnerName(String chunk) {
         UUID uuid = plotOwnership.get(chunk);
-        return Bukkit.getPlayer(uuid).getName();
+        if (Bukkit.getPlayer(uuid) != null) {
+            return Bukkit.getPlayer(uuid).getName();
+        } else {
+            return "Unknown";
+        }
     }
 
     public String getZoning(String chunk) {
@@ -82,30 +73,30 @@ public final class CityMap extends JavaPlugin {
 
     public void savePlots() {
         for (Map.Entry<String, UUID> entry : plotOwnership.entrySet()) {
-            this.getConfig().set("uuidData." + entry.getKey(), entry.toString());
+            getConfig().set("uuidData." + entry.getKey(), entry.getValue().toString());
         }
         for (Map.Entry<String, String> entry : plotZoning.entrySet()) {
-            this.getConfig().set("zoningData." + entry.getKey(), entry.getValue());
+            getConfig().set("zoningData." + entry.getKey(), entry.getValue());
         }
-        this.saveConfig();
+        saveConfig();
     }
 
     public void restorePlots() {
         ConfigurationSection uuidSection = getConfig().getConfigurationSection("uuidData");
         ConfigurationSection zoningSection = getConfig().getConfigurationSection("zoningData");
+
         if (uuidSection != null) {
             for (String key : uuidSection.getKeys(false)) {
-                String plotId = uuidSection.getString(key);
-                UUID owner = UUID.fromString(key);
-                plotOwnership.put(plotId, owner);
+                UUID owner = UUID.fromString(uuidSection.getString(key));
+                plotOwnership.put(key, owner);
             }
         }
         if (zoningSection != null) {
             for (String key : zoningSection.getKeys(false)) {
                 String zoning = zoningSection.getString(key);
                 plotZoning.put(key, zoning);
+
             }
         }
-
     }
 }
