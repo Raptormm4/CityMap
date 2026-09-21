@@ -17,6 +17,7 @@ public class Parcel {
     private String zoning;
     private boolean forSale;
     private int area;
+    private List<UUID> trusted;
 
     private Set<Integer> existingParcelIds;
 
@@ -35,7 +36,7 @@ public class Parcel {
         } while (existingParcelIds.contains(this.id));
         existingParcelIds.add(this.id);
     }
-    public Parcel(UUID creator, long tEff, List<Cuboid> cuboids, int id, String owner, String zoning, int area) {
+    public Parcel(UUID creator, long tEff, List<Cuboid> cuboids, int id, String owner, String zoning, int area, List<UUID> trusted) {
         this.creator = creator;
         this.tEff = tEff;
         this.cuboids = cuboids;
@@ -43,6 +44,7 @@ public class Parcel {
         this.owner = owner;
         this.zoning = zoning;
         this.area = area;
+        this.trusted = trusted;
     }
 
     public void changeOwner(String owner) {
@@ -53,6 +55,9 @@ public class Parcel {
     }
     public void addCuboid(Cuboid cuboid) {
         this.cuboids.add(cuboid);
+    }
+    public void addTrusted(UUID uuid) {
+        this.trusted.add(uuid);
     }
 
     // Get info functions
@@ -75,11 +80,14 @@ public class Parcel {
             return owner;
         }
     }
-    public @Nullable String getZoning() {
+    public String getZoning() {
         return zoning;
     }
     public int getArea() {
         return area;
+    }
+    public @Nullable List<UUID> getTrusted() {
+        return trusted;
     }
 
 }

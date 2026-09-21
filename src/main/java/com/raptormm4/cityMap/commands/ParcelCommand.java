@@ -4,9 +4,7 @@ import com.raptormm4.cityMap.CityMap;
 import com.raptormm4.cityMap.Cuboid;
 import com.raptormm4.cityMap.Parcel;
 import com.raptormm4.cityMap.listeners.SelectionListener;
-import org.bukkit.ChatColor;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
+import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -53,7 +51,7 @@ public class ParcelCommand implements CommandExecutor, TabExecutor {
                 }
             }
             if (args.length == 1 && !(args[0].equals("set"))) {
-                sender.sendMessage(ChatColor.RED + "ERROR! Must clarify what you are setting.");
+                sender.sendMessage(ChatColor.RED + "ERROR! Usage: /parcel set {zoning or owner}...");
             }
 
             // Zoning changes
@@ -104,16 +102,16 @@ public class ParcelCommand implements CommandExecutor, TabExecutor {
             // Ownership changes
             if (args.length == 2 && args[0].equals("set") && args[1].equals("owner")) {
                 if (parcel != null) {
-                    sender.sendMessage(ChatColor.AQUA + "Current owner: " + parcel.getOwner());
+                    sender.sendMessage(ChatColor.AQUA + "Current owner: " + parcel.getOwner() + ". To change owner, use /parcel set owner {new owner}.");
                 } else {
                     sender.sendMessage(ChatColor.RED + "This location has not been platted!");
                 }
             }
-            if (args.length == 3 && args[0].equals("set") && args[1].equals("owner") && args[2].equals("agricultural")) {
+            if (args.length == 3 && args[0].equals("set") && args[1].equals("owner")) {
                 if (parcel != null) {
-                    String zoning = "Agricultural";
-                    parcel.changeZoning(zoning);
-                    sender.sendMessage(ChatColor.GREEN + "This parcel is now zoned Agricultural (A)");
+                    String newOwner = args[2];
+                    parcel.changeOwner(newOwner);
+                    sender.sendMessage(ChatColor.GREEN + "This parcel is now owned by " + newOwner);
                 } else {
                     sender.sendMessage(ChatColor.RED + "This location has not been platted!");
                 }
@@ -133,8 +131,27 @@ public class ParcelCommand implements CommandExecutor, TabExecutor {
                         selectionListener.secondSelection.remove(uuid);
 
                         // Provide output to player
-                        sender.sendMessage(net.md_5.bungee.api.ChatColor.GREEN + "You have added a selection to parcel " + parcel.getId());
+                        sender.sendMessage(ChatColor.GREEN + "You have added a selection to parcel " + parcel.getId());
                     }
+                } else {
+                    sender.sendMessage(ChatColor.RED + "This location has not been platted!");
+                }
+            }
+
+            // Add trusted player
+            if (args.length == 3 && args[0].equals("add") && args[1].equals("trust")) {
+                if (parcel != null) {
+                    String inputPlayer = args[2];
+                    OfflinePlayer iP = Bukkit.getOfflinePlayer(inputPlayer);
+                    if (iP.hasPlayedBefore() || iP.isOnline()) {
+                        UUID trustPlayer = iP.getUniqueId();
+                        parcel.addTrusted(trustPlayer);
+                        sender.sendMessage(ChatColor.GREEN + "Trust added in this parcel for " + iP);
+                    } else {
+                        sender.sendMessage(ChatColor.RED + "Please add a valid player name");
+                    }
+                } else {
+                    sender.sendMessage(ChatColor.RED + "This location has not been platted!");
                 }
             }
         }
@@ -151,7 +168,7 @@ public class ParcelCommand implements CommandExecutor, TabExecutor {
             return Arrays.asList("set", "add");
         }
         if (args.length == 2) {
-            return Arrays.asList("zoning", "selection");
+            return Arrays.asList("zoning", "owner", "selection");
         }
         if (args.length == 3) {
             return Arrays.asList("residential", "commercial", "industrial", "agricultural");

@@ -13,7 +13,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.BoundingBox;
 
+import java.awt.image.AreaAveragingScaleFilter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class CityMap extends JavaPlugin {
 
@@ -66,6 +68,14 @@ public final class CityMap extends JavaPlugin {
                 getConfig().set(path + pathC + ".cornerOne", c.getCornerOne());
                 getConfig().set(path + pathC + ".cornerTwo", c.getCornerTwo());
             }
+            // Trusted info
+            List<UUID> trustedList = parcel.getTrusted();
+            if (trustedList != null && !trustedList.isEmpty()) {
+                List<String> trustP = trustedList.stream().map(UUID::toString).collect(Collectors.toList());
+                getConfig().set(path + ".trusted", trustP);
+            } else {
+                getConfig().set(path + ".trusted", null);
+            }
         }
         for (Cuboid cuboid : allCuboids) {
             String path = "cuboids." + cuboid.getCuboidId();
@@ -100,7 +110,7 @@ public final class CityMap extends JavaPlugin {
                 List<Cuboid> parcelCuboids = new ArrayList<>();
                 ConfigurationSection parcelCuboidSection = path.getConfigurationSection("cuboids");
                 if (parcelCuboidSection != null) {
-                    for (String cuboidKeyStr : cuboidsSection.getKeys(false)) {
+                    for (String cuboidKeyStr : parcelCuboidSection.getKeys(false)) {
                         try {
                             int cuboidID = Integer.parseInt(cuboidKeyStr);
                             Location cornerOne = parcelCuboidSection.getLocation(cuboidKeyStr + ".cornerOne");
@@ -113,7 +123,20 @@ public final class CityMap extends JavaPlugin {
                     }
                 }
 
-                Parcel parcel = new Parcel(creator, tEff, parcelCuboids, id, owner, zoning, area);
+                List<String> trustedStrings = getConfig().getStringList(path + ".trusted");
+                List<UUID> trustedPlayers = new ArrayList<>();
+                ConfigurationSection parcelTrustedPlayers = path.getConfigurationSection("trusted");
+                if (parcelTrustedPlayers != null) {
+                    for (String trustedStr : trustedStrings) {
+                        try {
+                            trustedPlayers.add(UUID.fromString(trustedStr));
+                        } catch (IllegalArgumentException e) {
+                            getLogger().warning("Failed to parse trusted player: " + trustedStr);
+                        }
+                    }
+                }
+
+                Parcel parcel = new Parcel(creator, tEff, parcelCuboids, id, owner, zoning, area, trustedPlayers);
                 allParcels.add(parcel);
             } catch (IllegalArgumentException e) {
                 getLogger().warning("Failed to restore Parcel ID: " + keyStr);
