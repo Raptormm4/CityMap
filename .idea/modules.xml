@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/CityMap.main.iml" filepath="$PROJECT_DIR$/.idea/modules/CityMap.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Minecraft plugins and mods.CityMap.main.iml" filepath="$PROJECT_DIR$/.idea/modules/Minecraft plugins and mods.CityMap.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.raptormm4.CityMap.main.iml" filepath="$PROJECT_DIR$/.idea/modules/com.raptormm4.CityMap.main.iml" />
     </modules>
   </component>
 </project>

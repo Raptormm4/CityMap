@@ -1,101 +1,139 @@
 package com.raptormm4.cityMap;
 
-import com.raptormm4.cityMap.commands.ClaimCommand;
-import com.raptormm4.cityMap.commands.PlotCommand;
-import com.raptormm4.cityMap.commands.UnclaimCommand;
+import com.raptormm4.cityMap.commands.*;
+import com.raptormm4.cityMap.commands.PlatCommand;
+import com.raptormm4.cityMap.commands.ParcelCommand;
+import com.raptormm4.cityMap.listeners.ClaimProtectionListener;
+import com.raptormm4.cityMap.listeners.SelectionListener;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.BoundingBox;
 
 import java.util.*;
 
 public final class CityMap extends JavaPlugin {
 
-    private HashMap<String, UUID> plotOwnership = new HashMap<>();
-    private HashMap<String, String> plotZoning = new HashMap<>();
+    private static CityMap instance;
+    private SelectionListener selectionListener;
+    public final List<Cuboid> allCuboids = new ArrayList<>();
+    public final List<Parcel> allParcels = new ArrayList<>();
 
     @Override
     public void onEnable() {
         System.out.println("CityMap is up and running. Go Gators!");
 
-        getCommand("claim").setExecutor(new ClaimCommand(this));
-        getCommand("unclaim").setExecutor(new UnclaimCommand(this));
-        getCommand("plot").setExecutor(new PlotCommand(this));
+        getCommand("plat").setExecutor(new PlatCommand(this, selectionListener));
+        getCommand("parcel").setExecutor(new ParcelCommand(this, selectionListener));
+        getCommand("selection").setExecutor(new SelectionCommand(this));
 
         getServer().getPluginManager().registerEvents(new ClaimProtectionListener(this), this);
 
         this.saveDefaultConfig();
         if (this.getConfig().contains("data")) {
-            this.restorePlots();
+            this.restoreParcels();
         }
+
+        instance = this;
     }
 
     @Override
     public void onDisable() {
-        this.savePlots();
+        this.saveParcels();
         System.out.println("CityMap has shut down. Please tell me we weren't DOGEd");
     }
 
-    public void addChunk(String chunk, UUID owner, String zoning) {
-        plotOwnership.put(chunk, owner);
-        plotZoning.put(chunk, zoning);
+    public static CityMap getInstance() {
+        return instance;
     }
 
-    public void removeChunk(String chunk, UUID owner, String zoning) {
-        plotOwnership.remove(chunk, owner);
-        plotZoning.remove(chunk, zoning);
-    }
-
-    public boolean isChunk(String chunk) {
-        return plotOwnership.containsKey(chunk);
-    }
-
-    public UUID getOwner(String chunk) {
-        return plotOwnership.get(chunk);
-    }
-
-    public String getOwnerName(String chunk) {
-        UUID uuid = plotOwnership.get(chunk);
-        if (Bukkit.getPlayer(uuid) != null) {
-            return Bukkit.getPlayer(uuid).getName();
-        } else {
-            return "Unknown";
+    // Saves
+    public void saveParcels() {
+        for (Parcel parcel : allParcels) {
+            String path = "parcels." + parcel.getId();
+            // Parcel info
+            getConfig().set(path + ".creator-uuid", parcel.getCreator().toString());
+            getConfig().set(path + ".timeEffective", parcel.getTimeCreated());
+            getConfig().set(path + ".owner", parcel.getOwner());
+            getConfig().set(path + ".zoning", parcel.getZoning());
+            getConfig().set(path + ".area", parcel.getArea());
+            // Cuboid info
+            for (Cuboid c : parcel.getCuboids()) {
+                String pathC = ".cuboids." + c.getCuboidId();
+                getConfig().set(path + pathC + ".cornerOne", c.getCornerOne());
+                getConfig().set(path + pathC + ".cornerTwo", c.getCornerTwo());
+            }
         }
-    }
-
-    public String getZoning(String chunk) {
-        return plotZoning.get(chunk);
-    }
-
-    public void changeZoning(String chunk, String zoning) {
-        plotZoning.replace(chunk, zoning);
-    }
-
-    public void savePlots() {
-        for (Map.Entry<String, UUID> entry : plotOwnership.entrySet()) {
-            getConfig().set("uuidData." + entry.getKey(), entry.getValue().toString());
-        }
-        for (Map.Entry<String, String> entry : plotZoning.entrySet()) {
-            getConfig().set("zoningData." + entry.getKey(), entry.getValue());
+        for (Cuboid cuboid : allCuboids) {
+            String path = "cuboids." + cuboid.getCuboidId();
+            getConfig().set(path + ".cornerOne", cuboid.getCornerOne());
+            getConfig().set(path + ".cornerTwo", cuboid.getCornerTwo());
         }
         saveConfig();
     }
 
-    public void restorePlots() {
-        ConfigurationSection uuidSection = getConfig().getConfigurationSection("uuidData");
-        ConfigurationSection zoningSection = getConfig().getConfigurationSection("zoningData");
+    public void restoreParcels() {
+        ConfigurationSection parcelsSection = getConfig().getConfigurationSection("parcels");
+        ConfigurationSection cuboidsSection = getConfig().getConfigurationSection("cuboids");
 
-        if (uuidSection != null) {
-            for (String key : uuidSection.getKeys(false)) {
-                UUID owner = UUID.fromString(uuidSection.getString(key));
-                plotOwnership.put(key, owner);
+        if (parcelsSection == null) {
+            return;
+        }
+        allParcels.clear();
+
+        // Restore parcels
+        for (String keyStr : parcelsSection.getKeys(false)) {
+            try {
+                int id = Integer.parseInt(keyStr);
+                ConfigurationSection path = parcelsSection.getConfigurationSection(keyStr);
+                if (path == null) continue;
+
+                UUID creator = UUID.fromString(path.getString("creator-uuid"));
+                long tEff = path.getLong("timeEffective");
+                String owner = path.getString("owner");
+                String zoning = path.getString("zoning");
+                int area = path.getInt("area");
+
+                List<Cuboid> parcelCuboids = new ArrayList<>();
+                ConfigurationSection parcelCuboidSection = path.getConfigurationSection("cuboids");
+                if (parcelCuboidSection != null) {
+                    for (String cuboidKeyStr : cuboidsSection.getKeys(false)) {
+                        try {
+                            int cuboidID = Integer.parseInt(cuboidKeyStr);
+                            Location cornerOne = parcelCuboidSection.getLocation(cuboidKeyStr + ".cornerOne");
+                            Location cornerTwo = parcelCuboidSection.getLocation(cuboidKeyStr + ".cornerTwo");
+                            Cuboid cuboid = new Cuboid(cuboidID, cornerOne, cornerTwo);
+                            parcelCuboids.add(cuboid);
+                        } catch (NumberFormatException e) {
+                            getLogger().warning("Failed to parse parcel cuboid ID: " + cuboidKeyStr + " in parcel ID: " + keyStr);
+                        }
+                    }
+                }
+
+                Parcel parcel = new Parcel(creator, tEff, parcelCuboids, id, owner, zoning, area);
+                allParcels.add(parcel);
+            } catch (IllegalArgumentException e) {
+                getLogger().warning("Failed to restore Parcel ID: " + keyStr);
             }
         }
-        if (zoningSection != null) {
-            for (String key : zoningSection.getKeys(false)) {
-                String zoning = zoningSection.getString(key);
-                plotZoning.put(key, zoning);
 
+        // Restore cuboids
+        for (String keyStr : cuboidsSection.getKeys(false)) {
+            try {
+                int cuboidId = Integer.parseInt(keyStr);
+                ConfigurationSection path = cuboidsSection.getConfigurationSection(keyStr);
+                if (path == null) continue;
+
+                Location cornerOne = path.getLocation("cornerOne");
+                Location cornerTwo = path.getLocation("cornerTwo");
+
+                Cuboid cuboid = new Cuboid(cuboidId, cornerOne, cornerTwo);
+                allCuboids.add(cuboid);
+            } catch (IllegalArgumentException e) {
+                getLogger().warning("Failed to restore Cuboid: " + keyStr);
             }
         }
     }

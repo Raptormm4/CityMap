@@ -1,19 +1,23 @@
 name: CityMap
-version: '1.0-SNAPSHOT'
+version: '0.2-SNAPSHOT'
 main: com.raptormm4.cityMap.CityMap
 api-version: '1.21'
 commands:
   claim:
-    description: "Claims chunk for testing"
-    usage: /claim
+    description: "Creates a parcel from a selection"
+    usage: /plat
     aliases:
-  unclaim:
-    description: "Unclaims chunk for testing"
-    usage: /unclaim
-    aliases:
+    permission: citymod.command.plat
+    permission-message: "You do not have permission to use this command"
   plot:
-    description: "Base command for plot of real property"
-    usage: /plot
+    description: "Base command for parcel of real property"
+    usage: /parcel
     aliases: [p]
-    permission: citymod.command.plot
+    permission: citymod.command.parcel
+    permission-message: "You do not have permission to use this command"
+  selection:
+    description: "Used to select area for creation of parcels"
+    usage: /selection
+    aliases:
+    permission: citymod.command.selection
     permission-message: "You do not have permission to use this command"
